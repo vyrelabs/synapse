@@ -28,7 +28,7 @@ type Config struct {
 type Frontier[T any] struct {
 	robotstxt *robots.RobotsResolver
 	Scorer    score.Score[T]
-	scheduler *sched.Scheduler[T]
+	scheduler sched.Scheduler[T]
 	config    Config
 
 	// Channels
@@ -45,7 +45,7 @@ type Frontier[T any] struct {
 func NewFrontier[T any](
 	robotstxt *robots.RobotsResolver,
 	scorer score.Score[T],
-	scheduler *sched.Scheduler[T],
+	scheduler sched.Scheduler[T],
 	config Config,
 ) *Frontier[T] {
 	return &Frontier[T]{
@@ -82,7 +82,11 @@ func (f *Frontier[T]) Start(ctx context.Context) error {
 		go f.scheduleWorker()
 	}
 
-	return f.scheduler.Start(ctx)
+	return nil // f.scheduler.Start(ctx) was called above
+}
+
+func (f *Frontier[T]) Tasks() <-chan *model.ScoredTask[T] {
+	return f.scheduler.Tasks()
 }
 
 func (f *Frontier[T]) Enqueue(ctx context.Context, endpoint string, metadata T) error {
