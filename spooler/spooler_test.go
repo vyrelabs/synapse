@@ -73,7 +73,9 @@ func TestSpoolerSync(t *testing.T) {
 
 	t.Cleanup(func() {
 		time.Sleep(10 * time.Second)
-		os.RemoveAll(baseDir)
+		if err := os.RemoveAll(baseDir); err != nil {
+			t.Logf("failed to clean up test spooler directory: %v", err)
+		}
 	})
 
 	t.Run("write single file", func(t *testing.T) {

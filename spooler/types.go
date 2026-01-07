@@ -67,7 +67,7 @@ type BatchProcessor struct {
 	Hooks *BatchHooks
 }
 
-func (c BatchProcessor) Validate() error {
+func (c *BatchProcessor) Validate() error {
 	if c.Hooks == nil {
 		c.Hooks = &BatchHooks{
 			OnBatchReady: func(batchDir string, totalBytes int64) error { return nil },

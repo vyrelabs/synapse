@@ -4,13 +4,10 @@ import (
 	"context"
 	"net/http"
 	"time"
-
-	"github.com/temoto/robotstxt"
 )
 
 type DefaultRobotsFetcher struct {
 	client http.Client
-	data   *robotstxt.RobotsData
 }
 
 func NewDefaultRobotsTxtFetcher(client http.Client) *DefaultRobotsFetcher {

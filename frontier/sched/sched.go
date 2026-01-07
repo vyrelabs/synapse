@@ -27,7 +27,6 @@ type StaticScheduler[T any] struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
-	wg     sync.WaitGroup
 	mu     sync.Mutex
 }
 

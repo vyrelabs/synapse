@@ -49,7 +49,7 @@ func (s *DynamicScheduler[T]) Start(ctx context.Context) error {
 	s.mu.Lock()
 	if s.cancel != nil {
 		s.mu.Unlock()
-		return fmt.Errorf("Scheduler: already started")
+		return fmt.Errorf("scheduler: already started")
 	}
 
 	s.ctx, s.cancel = context.WithCancel(ctx)
@@ -66,7 +66,7 @@ func (s *DynamicScheduler[T]) Stop(ctx context.Context) error {
 	s.mu.Lock()
 	if s.cancel == nil {
 		s.mu.Unlock()
-		return fmt.Errorf("Scheduler: not started")
+		return fmt.Errorf("scheduler: not started")
 	}
 
 	s.cancel()
@@ -125,7 +125,7 @@ func (s *DynamicScheduler[T]) checkAndPrefetch() {
 	fetchCount := decision.Count
 
 	if err := s.prefetch(fetchCount); err != nil {
-		_ = fmt.Errorf("prefetch error: %v\n", err)
+		fmt.Printf("prefetch error: %v\n", err)
 	}
 }
 
@@ -151,7 +151,9 @@ func (s *DynamicScheduler[T]) flushWorker() {
 	for {
 		select {
 		case <-s.ctx.Done():
-			s.flush(0) // flush all
+			if err := s.flush(0); err != nil {
+				fmt.Printf("final flush error: %v", err)
+			}
 			return
 		case <-ticker.C:
 			s.checkAndFlush()
@@ -178,7 +180,9 @@ func (s *DynamicScheduler[T]) checkAndFlush() {
 
 	flushCount := decision.Count
 
-	s.flush(flushCount)
+	if err := s.flush(flushCount); err != nil {
+		fmt.Printf("flush error: %v", err)
+	}
 }
 
 func (s *DynamicScheduler[T]) flush(count int) error {
@@ -208,7 +212,7 @@ LOOP:
 	}
 
 	if err := s.queue.Enqueue(s.ctx, tasks); err != nil {
-		return fmt.Errorf("scheduler: flush enqueue error: %v\n", err)
+		return fmt.Errorf("scheduler: flush enqueue error: %v", err)
 	}
 
 	return nil

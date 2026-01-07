@@ -7,15 +7,14 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 
-	"github.com/ritvikos/synapse/policy"
 	"golang.org/x/net/publicsuffix"
 )
 
 type HttpFetcher struct {
-	httpClient      HttpClient
-	retryController policy.RetryPolicy
-	eventHook       EventHooks
-	cookieJar       http.CookieJar
+	httpClient HttpClient
+	// retryController policy.RetryPolicy
+	eventHook EventHooks
+	cookieJar http.CookieJar
 }
 
 type Options func(*HttpFetcher)
@@ -117,13 +116,17 @@ func (f *HttpFetcher) do(_ context.Context, req *http.Request) (*http.Response, 
 
 	// TODO: As per config (set by user), but do it without conditional checks every time
 	if err := decompressResponse(resp); err != nil {
-		resp.Body.Close()
+		if err := resp.Body.Close(); err != nil {
+			return nil, fmt.Errorf("failed to close response body after decompression error: %w", err)
+		}
 		return nil, fmt.Errorf("decompression failed: %w", err)
 	}
 
 	utf8reader, err := newUTF8WithFallbackReader(resp, "")
 	if err != nil {
-		resp.Body.Close()
+		if err := resp.Body.Close(); err != nil {
+			return nil, fmt.Errorf("failed to close response body after utf-8 reader error: %w", err)
+		}
 		return nil, fmt.Errorf("failed to create UTF-8 reader: %w", err)
 	}
 	resp.Body = utf8reader
