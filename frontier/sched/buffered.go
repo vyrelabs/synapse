@@ -9,10 +9,14 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // TODO: Support on-disk persistence (configurable) for prefetch/flush buffers
 // for recovery and prevent task loss.
+
+var _ Scheduler[any] = (*BufferedScheduler[any])(nil)
 
 type BufferedScheduler[T any] struct {
 	queue  Queue[T]
@@ -29,7 +33,6 @@ type BufferedScheduler[T any] struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	mu     sync.Mutex
-	wg     sync.WaitGroup
 }
 
 func NewBufferedScheduler[T any](
@@ -48,7 +51,12 @@ func NewBufferedScheduler[T any](
 	}
 }
 
-func (s *BufferedScheduler[T]) Start(ctx context.Context) error {
+// Starts the buffered scheduler in blocking manner.
+// The caller should manage its lifecycle in a separate goroutine.
+// Note: Multiple calls to 'Run' will return an error.
+func (s *BufferedScheduler[T]) Run(ctx context.Context) error {
+	g, ctx := errgroup.WithContext(ctx)
+
 	s.mu.Lock()
 	if s.cancel != nil {
 		s.mu.Unlock()
@@ -58,27 +66,13 @@ func (s *BufferedScheduler[T]) Start(ctx context.Context) error {
 	s.ctx, s.cancel = context.WithCancel(ctx)
 	s.mu.Unlock()
 
-	s.wg.Add(2)
-	go s.prefetchWorker()
+	g.Go(func() error {
+		s.prefetchWorker()
+		return nil
+	})
 
 	s.triggerPrefetch()
-
-	return nil
-}
-
-func (s *BufferedScheduler[T]) Stop(ctx context.Context) error {
-	s.mu.Lock()
-	if s.cancel == nil {
-		s.mu.Unlock()
-		return fmt.Errorf("[buffered scheduler]: not started")
-	}
-
-	s.cancel()
-	s.cancel = nil
-	s.mu.Unlock()
-
-	s.wg.Wait()
-	return nil
+	return g.Wait()
 }
 
 func (s *BufferedScheduler[T]) Dequeue(ctx context.Context) ScoredTask[T] {
@@ -131,7 +125,6 @@ func (s *BufferedScheduler[T]) Enqueue(ctx context.Context, task ScoredTask[T]) 
 }
 
 func (s *BufferedScheduler[T]) prefetchWorker() {
-	defer s.wg.Done()
 	for {
 		select {
 		case <-s.ctx.Done():

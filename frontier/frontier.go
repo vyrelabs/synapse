@@ -5,15 +5,16 @@ package frontier
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/ritvikos/synapse/frontier/robots"
 	"github.com/ritvikos/synapse/frontier/sched"
 	"github.com/ritvikos/synapse/frontier/score"
 	model "github.com/ritvikos/synapse/model"
+	"golang.org/x/sync/errgroup"
 )
 
 type Config struct {
@@ -27,21 +28,25 @@ type Config struct {
 	SchedulerWorkerCount uint
 }
 
-// T represents crawl metadata (e.g., URL, Request).
+// 'T' is a generic parameter for the auxiliary
+// metadata associated with each URL to-be-crawled.
+//
+// # NOTE
+//
+// 'T' might be removed if a better design is created.
+// Currently, 'map[any]any' is into consideration as a replacement,
+// but it'd be less type-safe and the caller must ensure serializability, when using remote backend.
 type Frontier[T any] struct {
 	// Channels
-	ingressCh        chan *model.Task[T]
-	robotsResolvedCh chan *model.Task[T]
-	scoredCh         chan *model.ScoredTask[T]
+	ingressChan        chan *model.Task[T]
+	robotsResolvedChan chan *model.Task[T]
+	scoredChan         chan *model.ScoredTask[T]
 
+	// Sub-components
 	robotstxt *robots.RobotsResolver
 	Scorer    score.Score[T]
 	scheduler sched.Scheduler[T]
 
-	// Internal
-	ctx    context.Context
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
 	config Config
 }
 
@@ -52,40 +57,45 @@ func NewFrontier[T any](
 	config Config,
 ) *Frontier[T] {
 	return &Frontier[T]{
-		robotstxt: robotstxt,
-		Scorer:    scorer,
-		scheduler: scheduler,
-		config:    config,
+		robotstxt:          robotstxt,
+		Scorer:             scorer,
+		scheduler:          scheduler,
+		config:             config,
+		ingressChan:        make(chan *model.Task[T], config.IngressBufSize),
+		robotsResolvedChan: make(chan *model.Task[T], config.RobotsResolvedBufSize),
+		scoredChan:         make(chan *model.ScoredTask[T], config.ScoreBufSize),
 	}
 }
 
-func (f *Frontier[T]) Start(ctx context.Context) error {
-	f.ctx, f.cancel = context.WithCancel(ctx)
+func (f *Frontier[T]) Run(ctx context.Context) error {
+	g, ctx := errgroup.WithContext(ctx)
 
-	f.ingressCh = make(chan *model.Task[T], f.config.IngressBufSize)
-	f.robotsResolvedCh = make(chan *model.Task[T], f.config.RobotsResolvedBufSize)
-	f.scoredCh = make(chan *model.ScoredTask[T], f.config.ScoreBufSize)
-
-	if err := f.scheduler.Start(f.ctx); err != nil {
-		return err
-	}
+	g.Go(func() error {
+		return f.scheduler.Run(ctx)
+	})
 
 	for range f.config.RobotsWorkerCount {
-		f.wg.Add(1)
-		go f.robotsWorker()
+		g.Go(func() error {
+			f.robotsWorker(ctx)
+			return nil
+		})
 	}
 
 	for range f.config.ScoreWorkerCount {
-		f.wg.Add(1)
-		go f.scoreWorker()
+		g.Go(func() error {
+			f.scoreWorker(ctx)
+			return nil
+		})
 	}
 
 	for range f.config.SchedulerWorkerCount {
-		f.wg.Add(1)
-		go f.scheduleWorker()
+		g.Go(func() error {
+			f.scheduleWorker(ctx)
+			return nil
+		})
 	}
 
-	return nil
+	return g.Wait()
 }
 
 func (f *Frontier[T]) Dequeue(ctx context.Context) *model.ScoredTask[T] {
@@ -104,22 +114,20 @@ func (f *Frontier[T]) Enqueue(ctx context.Context, endpoint string, metadata T) 
 	}
 
 	select {
-	case f.ingressCh <- &task:
+	case f.ingressChan <- &task:
 	case <-ctx.Done():
 	}
 
 	return nil
 }
 
-func (f *Frontier[T]) robotsWorker() {
-	defer f.wg.Done()
-
+func (f *Frontier[T]) robotsWorker(ctx context.Context) {
 	for {
 		select {
-		case <-f.ctx.Done():
+		case <-ctx.Done():
 			return
 
-		case task, ok := <-f.ingressCh:
+		case task, ok := <-f.ingressChan:
 			if !ok {
 				log.Println("scored channel closed, stopping robots worker")
 				return
@@ -131,7 +139,7 @@ func (f *Frontier[T]) robotsWorker() {
 				return
 			}
 
-			entry, err := f.robotstxt.Resolve(f.ctx, url.Host)
+			entry, err := f.robotstxt.Resolve(ctx, url.Scheme+"://"+url.Host)
 			if err != nil {
 				log.Println("error resolving robots.txt for host", url.Host, ":", err)
 			}
@@ -151,31 +159,30 @@ func (f *Frontier[T]) robotsWorker() {
 			}
 
 			task.ExecuteAt = now
+			fmt.Printf("Robots.txt entry for host %s: %+v\n", url.Host, entry)
 
 			select {
-			case f.robotsResolvedCh <- task:
-			case <-f.ctx.Done():
+			case f.robotsResolvedChan <- task:
+			case <-ctx.Done():
 				return
 			}
 		}
 	}
 }
 
-func (f *Frontier[T]) scoreWorker() {
-	defer f.wg.Done()
-
+func (f *Frontier[T]) scoreWorker(ctx context.Context) {
 	for {
 		select {
-		case <-f.ctx.Done():
+		case <-ctx.Done():
 			return
 
-		case task, ok := <-f.robotsResolvedCh:
+		case task, ok := <-f.robotsResolvedChan:
 			if !ok {
 				log.Println("ingress channel closed, stopping score worker")
 				return
 			}
 
-			score, err := f.Scorer.Score(f.ctx, task)
+			score, err := f.Scorer.Score(ctx, task)
 			if err != nil {
 				log.Printf("error scoring item: %v", err)
 				continue
@@ -185,31 +192,31 @@ func (f *Frontier[T]) scoreWorker() {
 				Task:  task,
 				Score: score,
 			}
+			fmt.Printf("scored task: %+v\n", *scoredTask)
+			fmt.Printf("task: %+v\n", *scoredTask.Task)
 
 			select {
-			case f.scoredCh <- scoredTask:
-			case <-f.ctx.Done():
+			case f.scoredChan <- scoredTask:
+			case <-ctx.Done():
 				return
 			}
 		}
 	}
 }
 
-func (f *Frontier[T]) scheduleWorker() {
-	defer f.wg.Done()
-
+func (f *Frontier[T]) scheduleWorker(ctx context.Context) {
 	for {
 		select {
-		case <-f.ctx.Done():
+		case <-ctx.Done():
 			return
 
-		case task, ok := <-f.scoredCh:
+		case task, ok := <-f.scoredChan:
 			if !ok {
 				log.Println("robots resolved channel closed, stopping scheduler worker")
 				return
 			}
 
-			err := f.scheduler.Enqueue(f.ctx, task)
+			err := f.scheduler.Enqueue(ctx, task)
 			if err != nil {
 				log.Printf("error scheduling task for url %s: %v", task.Task.Url, err)
 				continue

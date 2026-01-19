@@ -5,8 +5,6 @@ package sched
 
 import (
 	"context"
-	"fmt"
-	"sync"
 )
 
 var _ Scheduler[any] = (*UnbufferedScheduler[any])(nil)
@@ -15,11 +13,6 @@ var _ Scheduler[any] = (*UnbufferedScheduler[any])(nil)
 type UnbufferedScheduler[T any] struct {
 	queue     Queue[T]
 	dequeueCh chan ScoredTask[T]
-
-	// Internal
-	ctx    context.Context
-	cancel context.CancelFunc
-	mu     sync.Mutex
 }
 
 func NewUnbufferedScheduler[T any](queue Queue[T]) *UnbufferedScheduler[T] {
@@ -29,24 +22,8 @@ func NewUnbufferedScheduler[T any](queue Queue[T]) *UnbufferedScheduler[T] {
 	}
 }
 
-func (s *UnbufferedScheduler[T]) Start(ctx context.Context) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.cancel != nil {
-		return fmt.Errorf("[blocking scheduler]: already started")
-	}
-	s.ctx, s.cancel = context.WithCancel(ctx)
-	return nil
-}
-
-func (s *UnbufferedScheduler[T]) Stop(ctx context.Context) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.cancel == nil {
-		return fmt.Errorf("[blocking scheduler]: not started")
-	}
-	s.cancel()
-	s.cancel = nil
+func (s *UnbufferedScheduler[T]) Run(ctx context.Context) error {
+	<-ctx.Done()
 	return nil
 }
 
@@ -68,5 +45,5 @@ func (s *UnbufferedScheduler[T]) Dequeue(ctx context.Context) ScoredTask[T] {
 }
 
 func (s *UnbufferedScheduler[T]) Enqueue(ctx context.Context, task ScoredTask[T]) error {
-	return s.queue.Enqueue(s.ctx, []ScoredTask[T]{task})
+	return s.queue.Enqueue(ctx, []ScoredTask[T]{task})
 }
