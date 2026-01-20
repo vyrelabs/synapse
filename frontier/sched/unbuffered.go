@@ -27,21 +27,25 @@ func (s *UnbufferedScheduler[T]) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *UnbufferedScheduler[T]) Dequeue(ctx context.Context) ScoredTask[T] {
-	n, _ := s.queue.Dequeue(ctx, 1, s.dequeueCh)
-	if n == 0 {
-		return nil
+func (s *UnbufferedScheduler[T]) Dequeue(ctx context.Context) (ScoredTask[T], error) {
+	n, err := s.queue.Dequeue(ctx, 1, s.dequeueCh)
+	if err != nil {
+		// TODO: retry/backoff
+		return nil, err
+	}
+	if n <= 0 {
+		return nil, nil
 	}
 
 	select {
 	case task := <-s.dequeueCh:
-		return task
+		return task, nil
 	case <-ctx.Done():
-		return nil
+		return nil, nil
 	default:
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (s *UnbufferedScheduler[T]) Enqueue(ctx context.Context, task ScoredTask[T]) error {

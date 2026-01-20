@@ -98,8 +98,13 @@ func (f *Frontier[T]) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (f *Frontier[T]) Dequeue(ctx context.Context) *model.ScoredTask[T] {
-	return f.scheduler.Dequeue(ctx)
+func (f *Frontier[T]) Dequeue(ctx context.Context) (*model.ScoredTask[T], error) {
+	task, err := f.scheduler.Dequeue(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
 }
 
 func (f *Frontier[T]) Enqueue(ctx context.Context, endpoint string, metadata T) error {

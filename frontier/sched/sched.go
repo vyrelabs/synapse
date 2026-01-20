@@ -21,7 +21,7 @@ type Scheduler[T any] interface {
 	// eventally to be flushed to the underlying queue.
 	Enqueue(ctx context.Context, task ScoredTask[T]) error
 
-	// Dequeues 'n' tasks from the underlying queue into the scheduler's buffer
+	// Dequeues tasks from the underlying queue into the scheduler's buffer
 	// (if any, based on underlying implementation) and returns the number of tasks dequeued.
-	Dequeue(ctx context.Context) ScoredTask[T]
+	Dequeue(ctx context.Context) (ScoredTask[T], error)
 }

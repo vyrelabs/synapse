@@ -75,14 +75,14 @@ func (s *BufferedScheduler[T]) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (s *BufferedScheduler[T]) Dequeue(ctx context.Context) ScoredTask[T] {
+func (s *BufferedScheduler[T]) Dequeue(ctx context.Context) (ScoredTask[T], error) {
 	// fast path
 	select {
 	case task, ok := <-s.prefetchChan:
 		if !ok {
-			return nil
+			return nil, nil
 		}
-		return task
+		return task, nil
 	default:
 	}
 
@@ -91,14 +91,14 @@ func (s *BufferedScheduler[T]) Dequeue(ctx context.Context) ScoredTask[T] {
 
 	select {
 	case <-ctx.Done():
-		return nil
+		return nil, nil
 	case <-s.ctx.Done():
-		return nil
+		return nil, nil
 	case task, ok := <-s.prefetchChan:
 		if !ok {
-			return nil
+			return nil, nil
 		}
-		return task
+		return task, nil
 	}
 }
 
