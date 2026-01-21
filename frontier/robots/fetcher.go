@@ -13,7 +13,7 @@ type DefaultRobotsFetcher struct {
 	client http.Client
 }
 
-func NewDefaultRobotsTxtFetcher(client http.Client) *DefaultRobotsFetcher {
+func NewDefaultRobotsTxtFetcher() *DefaultRobotsFetcher {
 	return &DefaultRobotsFetcher{
 		client: http.Client{
 			Timeout: 12 * time.Second,

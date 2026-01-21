@@ -12,13 +12,13 @@ var _ Scheduler[any] = (*UnbufferedScheduler[any])(nil)
 // Directly enqueue/dequeue to/from the backend queue without any buffering.
 type UnbufferedScheduler[T any] struct {
 	queue     Queue[T]
-	dequeueCh chan ScoredTask[T]
+	dequeueCh chan Task[T]
 }
 
 func NewUnbufferedScheduler[T any](queue Queue[T]) *UnbufferedScheduler[T] {
 	return &UnbufferedScheduler[T]{
 		queue:     queue,
-		dequeueCh: make(chan ScoredTask[T], 1),
+		dequeueCh: make(chan Task[T], 1),
 	}
 }
 
@@ -27,7 +27,7 @@ func (s *UnbufferedScheduler[T]) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *UnbufferedScheduler[T]) Dequeue(ctx context.Context) (ScoredTask[T], error) {
+func (s *UnbufferedScheduler[T]) Dequeue(ctx context.Context) (Task[T], error) {
 	n, err := s.queue.Dequeue(ctx, 1, s.dequeueCh)
 	if err != nil {
 		// TODO: retry/backoff
@@ -48,6 +48,6 @@ func (s *UnbufferedScheduler[T]) Dequeue(ctx context.Context) (ScoredTask[T], er
 	return nil, nil
 }
 
-func (s *UnbufferedScheduler[T]) Enqueue(ctx context.Context, task ScoredTask[T]) error {
-	return s.queue.Enqueue(ctx, []ScoredTask[T]{task})
+func (s *UnbufferedScheduler[T]) Enqueue(ctx context.Context, task Task[T]) error {
+	return s.queue.Enqueue(ctx, []Task[T]{task})
 }

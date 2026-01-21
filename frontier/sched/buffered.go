@@ -22,10 +22,10 @@ type BufferedScheduler[T any] struct {
 	queue  Queue[T]
 	policy BufferPolicy
 
-	prefetchChan       chan ScoredTask[T]
+	prefetchChan       chan Task[T]
 	prefetchSignalChan chan struct{}
 
-	flushChan       chan ScoredTask[T]
+	flushChan       chan Task[T]
 	flushSignalChan chan struct{}
 	flushTimer      *time.Timer
 
@@ -44,9 +44,9 @@ func NewBufferedScheduler[T any](
 	return &BufferedScheduler[T]{
 		queue:              queue,
 		policy:             policy,
-		prefetchChan:       make(chan ScoredTask[T], prefetchBufSize),
+		prefetchChan:       make(chan Task[T], prefetchBufSize),
 		prefetchSignalChan: make(chan struct{}, 1),
-		flushChan:          make(chan ScoredTask[T], flushBufSize),
+		flushChan:          make(chan Task[T], flushBufSize),
 		flushSignalChan:    make(chan struct{}, 1),
 	}
 }
@@ -75,7 +75,7 @@ func (s *BufferedScheduler[T]) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (s *BufferedScheduler[T]) Dequeue(ctx context.Context) (ScoredTask[T], error) {
+func (s *BufferedScheduler[T]) Dequeue(ctx context.Context) (Task[T], error) {
 	// fast path
 	select {
 	case task, ok := <-s.prefetchChan:
@@ -102,7 +102,7 @@ func (s *BufferedScheduler[T]) Dequeue(ctx context.Context) (ScoredTask[T], erro
 	}
 }
 
-func (s *BufferedScheduler[T]) Enqueue(ctx context.Context, task ScoredTask[T]) error {
+func (s *BufferedScheduler[T]) Enqueue(ctx context.Context, task Task[T]) error {
 	// fast path
 	select {
 	case s.flushChan <- task:

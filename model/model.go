@@ -11,10 +11,6 @@ type Task[T any] struct {
 	ExecuteAt time.Time
 	Metadata  T
 	Url       string
+	Score     float64
 	// Fingerprint string
-}
-
-type ScoredTask[T any] struct {
-	Task  *Task[T]
-	Score float64
 }

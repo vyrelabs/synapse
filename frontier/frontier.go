@@ -40,7 +40,7 @@ type Frontier[T any] struct {
 	// Channels
 	ingressChan        chan *model.Task[T]
 	robotsResolvedChan chan *model.Task[T]
-	scoredChan         chan *model.ScoredTask[T]
+	scoredChan         chan *model.Task[T]
 
 	// Sub-components
 	robotstxt *robots.RobotsResolver
@@ -63,7 +63,7 @@ func NewFrontier[T any](
 		config:             config,
 		ingressChan:        make(chan *model.Task[T], config.IngressBufSize),
 		robotsResolvedChan: make(chan *model.Task[T], config.RobotsResolvedBufSize),
-		scoredChan:         make(chan *model.ScoredTask[T], config.ScoreBufSize),
+		scoredChan:         make(chan *model.Task[T], config.ScoreBufSize),
 	}
 }
 
@@ -98,12 +98,13 @@ func (f *Frontier[T]) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (f *Frontier[T]) Dequeue(ctx context.Context) (*model.ScoredTask[T], error) {
+func (f *Frontier[T]) Dequeue(ctx context.Context) (*model.Task[T], error) {
 	task, err := f.scheduler.Dequeue(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	// TODO: Handle tasks mem-pool dealloc here (when added)
 	return task, nil
 }
 
@@ -113,6 +114,7 @@ func (f *Frontier[T]) Enqueue(ctx context.Context, endpoint string, metadata T) 
 		return err
 	}
 
+	// TODO: Handle tasks mem-pool alloc here (when added)
 	task := model.Task[T]{
 		Url:      endpoint,
 		Metadata: metadata,
@@ -193,15 +195,11 @@ func (f *Frontier[T]) scoreWorker(ctx context.Context) {
 				continue
 			}
 
-			scoredTask := &model.ScoredTask[T]{
-				Task:  task,
-				Score: score,
-			}
-			fmt.Printf("scored task: %+v\n", *scoredTask)
-			fmt.Printf("task: %+v\n", *scoredTask.Task)
+			task.Score = score
+			fmt.Printf("scored task: %+v\n", *task)
 
 			select {
-			case f.scoredChan <- scoredTask:
+			case f.scoredChan <- task:
 			case <-ctx.Done():
 				return
 			}
@@ -223,7 +221,7 @@ func (f *Frontier[T]) scheduleWorker(ctx context.Context) {
 
 			err := f.scheduler.Enqueue(ctx, task)
 			if err != nil {
-				log.Printf("error scheduling task for url %s: %v", task.Task.Url, err)
+				log.Printf("error scheduling task for url %s: %v", task.Url, err)
 				continue
 			}
 		}
