@@ -6,7 +6,7 @@ package score
 import (
 	"context"
 
-	model "github.com/ritvikos/synapse/model"
+	model "github.com/vyrelabs/synapse/model"
 )
 
 type Score[T any] interface {

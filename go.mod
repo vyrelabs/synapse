@@ -1,4 +1,4 @@
-module github.com/ritvikos/synapse
+module github.com/vyrelabs/synapse
 
 go 1.24.9
 

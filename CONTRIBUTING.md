@@ -9,7 +9,7 @@ The project welcomes contributions from the community!
 2. Clone the repository:
 
    ```
-   git clone https://github.com/ritvikos/synapse
+   git clone https://github.com/vyrelabs/synapse
    ```
 
 3. Navigate to the project directory:
@@ -34,7 +34,7 @@ Before writing code for a new feature, please first discuss the change you wish 
 
 To contribute, please follow these guidelines:
 
-1. Fork the repository: [https://github.com/ritvikos/synapse](https://github.com/ritvikos/synapse)
+1. Fork the repository: [https://github.com/vyrelabs/synapse](https://github.com/vyrelabs/synapse)
 
 2. Clone your forked repository to your local machine.
 

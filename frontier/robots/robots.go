@@ -8,8 +8,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/ritvikos/synapse/frontier/backend"
 	"github.com/temoto/robotstxt"
+	"github.com/vyrelabs/synapse/frontier/backend"
 	"golang.org/x/sync/singleflight"
 )
 

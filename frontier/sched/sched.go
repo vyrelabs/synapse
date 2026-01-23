@@ -6,9 +6,9 @@ package sched
 import (
 	"context"
 
-	"github.com/ritvikos/synapse/frontier/backend"
-	"github.com/ritvikos/synapse/lifecycle"
-	"github.com/ritvikos/synapse/model"
+	"github.com/vyrelabs/synapse/frontier/backend"
+	"github.com/vyrelabs/synapse/lifecycle"
+	"github.com/vyrelabs/synapse/model"
 )
 
 type Task[T any] = *model.Task[T]

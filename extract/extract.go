@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/ritvikos/synapse/extract/transform"
+	"github.com/vyrelabs/synapse/extract/transform"
 )
 
 type Element struct {

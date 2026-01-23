@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ritvikos/synapse/frontier/robots"
-	"github.com/ritvikos/synapse/frontier/sched"
-	"github.com/ritvikos/synapse/frontier/score"
-	model "github.com/ritvikos/synapse/model"
+	"github.com/vyrelabs/synapse/frontier/robots"
+	"github.com/vyrelabs/synapse/frontier/sched"
+	"github.com/vyrelabs/synapse/frontier/score"
+	model "github.com/vyrelabs/synapse/model"
 	"golang.org/x/sync/errgroup"
 )
 
