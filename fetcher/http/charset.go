@@ -25,7 +25,6 @@ type CharsetMetadata struct {
 // Automatically detects the charset and converts to UTF-8 if needed.
 // Returns the original reader unchanged if the content is non-textual.
 func newUTF8WithFallbackReader(resp *http.Response, defaultEncoding string) (io.ReadCloser, error) {
-
 	metadata, err := detectCharset(resp, defaultEncoding)
 	if err != nil {
 		return nil, err
@@ -48,7 +47,6 @@ func newUTF8WithFallbackReader(resp *http.Response, defaultEncoding string) (io.
 
 // SAFETY: Ensure that the `defaultEncoding` is valid at the caller side, if provided.
 func detectCharset(resp *http.Response, defaultEncoding string) (*CharsetMetadata, error) {
-
 	detectCharsetFromBody := func(resp *http.Response) (string, error) {
 		buf := make([]byte, defaultPeekSize)
 		n, err := io.ReadFull(resp.Body, buf)

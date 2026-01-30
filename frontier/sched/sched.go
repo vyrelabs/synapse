@@ -11,8 +11,10 @@ import (
 	"github.com/vyrelabs/synapse/model"
 )
 
-type Task[T any] = *model.Task[T]
-type Queue[T any] = backend.Queue[Task[T]]
+type (
+	Task[T any]  = *model.Task[T]
+	Queue[T any] = backend.Queue[Task[T]]
+)
 
 type Scheduler[T any] interface {
 	lifecycle.Runner

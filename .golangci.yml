@@ -4,6 +4,11 @@
 # mem-alloc:  after profiling.
 # monitoring: if the experimental part in 'frontier/sched' is added (see: https://github.com/vyrelabs/synapse/commit/437fb2f761f8d1adf96f8af27b0dbcdec34e509d)
 version: '2'
+
+formatters:
+  enable:
+    - gofumpt
+
 linters:
   default: none
   enable:

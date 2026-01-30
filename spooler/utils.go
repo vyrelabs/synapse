@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const filePermissions fs.FileMode = 0770
+const filePermissions fs.FileMode = 0o770
 
 func mkdirIfNotExists(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
