@@ -165,7 +165,7 @@ func (f *Frontier[T]) robotsWorker(ctx context.Context) {
 				now = now.Add(crawlDelay)
 			}
 
-			task.ExecuteAt = now
+			task.ExecuteAt = now.Unix()
 			fmt.Printf("Robots.txt entry for host %s: %+v\n", url.Host, entry)
 
 			select {
