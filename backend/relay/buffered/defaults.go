@@ -1,9 +1,11 @@
 // Copyright 2025-2026 Ritvik Gupta
 // SPDX-License-Identifier: Apache-2.0
 
-package sched
+package buffered
 
 import "time"
+
+var _ BufferPolicy = (*DefaultPolicy)(nil)
 
 // Trigger prefetch and flush at 100% buffer usage.
 type DefaultPolicy struct {
@@ -25,5 +27,3 @@ func (p *DefaultPolicy) Prefetch(state State) int {
 func (p *DefaultPolicy) Flush(state State) (int, time.Duration) {
 	return p.threshold.Flush(state)
 }
-
-var _ BufferPolicy = (*DefaultPolicy)(nil)

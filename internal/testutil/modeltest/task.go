@@ -1,23 +1,11 @@
 // Copyright 2025-2026 Ritvik Gupta
 // SPDX-License-Identifier: Apache-2.0
 
-package model
+package modeltest
 
 import (
 	"fmt"
 )
-
-// TODO
-//
-// - Use 'uint32' for unix-timestamp, it'll be valid until 2106.
-
-// NOTE
-//
-// I believe these methods aren't needed.
-// They'll be added as per requirement.
-//
-// MethodPut, MethodDelete, MethodPatch,
-// MethodOptions, MethodConnect, MethodTrace
 
 type HTTPMethod uint8
 
@@ -26,6 +14,9 @@ const (
 	MethodGet
 	MethodPost
 	MethodHead
+	MethodPut
+	MethodDelete
+	MethodPatch
 )
 
 func (m HTTPMethod) String() string {
@@ -36,17 +27,39 @@ func (m HTTPMethod) String() string {
 		return "POST"
 	case MethodHead:
 		return "HEAD"
+	case MethodPut:
+		return "PUT"
+	case MethodDelete:
+		return "DELETE"
+	case MethodPatch:
+		return "PATCH"
 	default:
 		return fmt.Sprintf("UNKNOWN METHOD: %d", m)
 	}
 }
 
-// Task is a unit of work for crawling a URL,
-// along with its associated metadata of generic type T.
-//
-// On 64-bit arch, originally it was ~120 bytes (aligned),
-// now reduced to ~40 bytes
-type Task struct {
+func httpMethodFromGofakeit(method string) HTTPMethod {
+	switch method {
+	case "GET":
+		return MethodGet
+	case "POST":
+		return MethodPost
+	case "HEAD":
+		return MethodHead
+	case "PUT":
+		return MethodPut
+	case "DELETE":
+		return MethodDelete
+	case "PATCH":
+		return MethodPatch
+	default:
+		return MethodUnknown
+	}
+}
+
+// Re-purposed from `model.Task`, until the __core__ structures are added [WIP]
+// Meanwhile, it'll be used for testing the underlying infra components.
+type MockTask struct {
 	// Metadata holds user-defined auxiliary data of generic type T.
 	// Ex: Custom headers, Cookies, Response, etc.
 	Metadata map[string]any
@@ -58,9 +71,6 @@ type Task struct {
 	// Url is the complete address fo the crawled resource.
 	Url string
 
-	// FIXME
-	// Can we store last execution time and next crawl's offset packed?
-
 	// ExecuteAt is a unix timestamp representing the
 	// scheduled time for the next crawl.
 	ExecuteAt int64
@@ -68,15 +78,6 @@ type Task struct {
 	// LastCrawlAt is a unix timestamp representing the
 	// last time the URL was crawled.
 	LastCrawlAt int64
-
-	// FIXME
-	// Decide how to store the 'score' efficiently (without wasting space)
-	// The precision will be compromised, but how much would be acceptable?
-	//
-	// Possible approaches:
-	// - store as 'float32'.
-	// - scale 'float64' by 1000 and store as 'uint16'.
-	// - offload it to the underlying storage.
 
 	// Score is the priority assigned to the URL.
 	Score float64
@@ -86,4 +87,24 @@ type Task struct {
 
 	// Method is the HTTP method used for the request.
 	Method HTTPMethod
+}
+
+type TaskOption func(*MockTask)
+
+func WithMetadata(metadata map[string]any) TaskOption {
+	return func(t *MockTask) {
+		t.Metadata = metadata
+	}
+}
+
+func WithStatusCode(code uint16) TaskOption {
+	return func(t *MockTask) {
+		t.StatusCode = code
+	}
+}
+
+func WithURL(url string) TaskOption {
+	return func(t *MockTask) {
+		t.Url = url
+	}
 }

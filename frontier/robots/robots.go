@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/temoto/robotstxt"
-	"github.com/vyrelabs/synapse/frontier/backend"
+	"github.com/vyrelabs/synapse/backend"
 	"golang.org/x/sync/singleflight"
 )
 
