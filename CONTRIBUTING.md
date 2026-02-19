@@ -20,17 +20,23 @@ The project welcomes contributions from the community!
 
 4. [Install Taskfile](https://taskfile.dev/docs/installation#official-package-managers) (if not already installed)
 
-5. Run all tests to verify your setup with `task test:all` or run individual component tests with `task test PKG=fetcher` (replace `fetcher` with the desired component name, see [project's Taskfile](./Taskfile.yml)).
+5. Run all tests to verify your setup with `task test:all` or run individual component tests with `task test PKG=fetcher`
+   (replace `fetcher` with the desired component name, see [project's Taskfile](./Taskfile.yml)).
 
 ## Considerations for designing abstractions and APIs
 
-1. Try to stay compatible with standard library interfaces when applicable..
-2. Prefer interface segregation for low couping, when applicable with bare-minimum, necessary methods, when possible.
-3. Try to expose safe minimal public API surface with sensible configurable options and defaults. In case the unsafe operations are exposed for standard library compatibility, document them clearly about the potential risks and usage guidelines.
+1. Try to stay compatible with standard library interfaces, when applicable.
+2. Prefer interface segregation for low couping with bare-minimum & necessary exposed methods, when possible.
+3. Try to expose safe minimal public API surface with sensible configurable options and defaults.
+   In case the unsafe operations are exposed for standard library compatibility,
+   document them clearly about the potential risks and usage guidelines.
+
+Overall, shrink the API surface, so there's less for the end-users and implementors to mess up.
 
 ## Contributing
 
-Before writing code for a new feature, please first discuss the change you wish to make via github discussions to ensure that it aligns with the project's goals and to avoid any duplication of effort.
+Before writing code for a new feature, please first discuss the change you wish to make via github discussions to ensure
+that it aligns with the project's goals and to avoid any duplication of effort.
 
 To contribute, please follow these guidelines:
 
@@ -57,7 +63,9 @@ git checkout -b your-bug-or-feature-branch
 
 5. Run `task lint` to ensure your code adheres to the project's coding standards
 
-6. Make your changes and commit them with clear, [descriptive conventoinal commit message](https://www.conventionalcommits.org/en/v1.0.0/). Ensure that you've [\"Sign-off\" your commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). You can do this by adding the `-s` flag to your git commit command:
+6. Make your changes and commit them with clear, [descriptive conventoinal commit message](https://www.conventionalcommits.org/en/v1.0.0/).
+   Ensure that you've [\"Sign-off\" your commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
+   You can do this by adding the `-s` flag to your git commit command:
 
    ```
    git commit -s

@@ -2,28 +2,46 @@
 
 ## Overview
 
-Synapse is a modular and configurable framework to build unified web crawling and data processing pipelines in Go for any workload from single machine to distributed clusters (planned for the future) and provides core components including fetcher, frontier, pipeline, queue and storage backends, allowing the developers focus on domain-specific crawling logic without re-implementing infrastructure from scratch, rather configure and extend the existing components.
+Synapse is a highly efficient and pluggable, open-source crawling/scraping framework;
+for both local and distributed workloads.
+
+There're two integration paths, based on level of control:
+
+1. High-Level API: Built for standard crawling workloads.
+   Extend with built-in plugins and get moving immediately without fiddling
+   with the underlying mechanics. **[TODO]**
+
+2. Low-Level API: For architecting custom scrapers/crawlers with (Sub)component-level control.
+   Extend with your own implementations. **[WIP]**
 
 ## Status
 
-This framework is in active development and not production-ready yet. Breaking changes may occur in future releases. So, the public documentation and examples will be provided once the core components stabilize.
+The distributed architecture is **[WIP]**; essentially tinkering with distributed state-machine.
+Currently, in experimental phase. Expect breaking changes as the architecture evolves.
 
 ## Documentation
 
-For developers, component-specific implementation details are available in their respective directories with examples ([Fetcher](./fetcher), [Spooler](./spooler))
+Efforts are currently prioritized toward solid core abstractions over polished public documentation.
+Implementation-specific details are available within each component's directory for developers
+diving into the internals.
 
-## Contributing
+## Development
 
-Contributions are welcome! Please refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to contribute to this project.
+Contributions are welcome!
 
-## History and Purpose
+- Start by checking [contribution guidelines](./CONTRIBUTING.md).
 
-This framework is primarily developed as an engineering challenge to develop highly pluggable distributed web crawler infrastructure in Go.
+- Any questions, ask on [discussions](https://github.com/vyrelabs/synapse/discussions)
 
-There is a long-term goal to leverage crawling infrastructure (on top of this framework) in a separate [OSS search engine project](https://github.com/ritvikos/idx), that project remains entirely independent.
+## Why this naming?
 
-All architectural decisions, design choices, and implementation details in Synapse are made solely based on its merit as a standalone Go web crawling framework, with no influence from or coupling to any future projects.
+In neurobiology, a synapse is the junction for signal transmission between neurons. 
+This framework serves as the interface between the web and application-specific logic, 
+decoupling data acquisition from downstream processing.
 
 ## Ethical Considerations
 
-It's not intended for any malicious or unethical web scraping/crawling activities. Please ensure you [comply with the website's `robots.txt` directives](./frontier/robots) and terms of service (TOS) before crawling/scraping.
+It's not intended for any malicious or unethical web scraping/crawling activities.
+Please ensure you [comply with the website's `robots.txt` directives](./frontier/robots)
+and terms of service (TOS) before crawling/scraping.
+
